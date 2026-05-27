@@ -115,7 +115,7 @@ async function downloadForPeriod(page, period) {
     const startIso = formatIsoDate(period.start);
     const endIso = formatIsoDate(period.end);
     const outName = `estacao-salinas-${startIso}-${endIso}.csv`;
-    const outPath = path.join(OUTPUT_DIR, 'data', outName);
+    const outPath = path.join(OUTPUT_DIR, 'data', 'mes-a-mes', outName);
 
     if (fs.existsSync(outPath)) {
         console.log(`Ja existe, pulando: ${outName}`);
