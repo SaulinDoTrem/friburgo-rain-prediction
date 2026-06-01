@@ -1,0 +1,83 @@
+"""
+Regressao polinomial (uma variavel) para estimar chuva.
+"""
+
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from sklearn import metrics
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+
+
+def carregar_base():
+	data_path = (
+		Path(__file__).resolve().parents[1]
+		/ "database"
+		/ "data"
+		/ "estacao-salinas-completo.csv"
+	)
+	base = pd.read_csv(data_path, decimal=",", na_values=["", " "])
+	base["data"] = pd.to_datetime(base["data"], format="%d/%m/%Y", errors="coerce")
+	base["hora"] = pd.to_numeric(base["hora"], errors="coerce")
+	return base
+
+
+################## Preprocessamento ##################
+
+base = carregar_base()
+
+cols_previsores = ["temperatura_inst"]
+col_objetivo = "chuva"
+
+base = base[cols_previsores + [col_objetivo]].dropna()
+
+previsores = base[cols_previsores]
+objetivo = base[[col_objetivo]]
+
+previsores_treinamento, previsores_teste, objetivo_treinamento, objetivo_teste = (
+	train_test_split(
+		previsores,
+		objetivo,
+		test_size=0.25,
+		random_state=0,
+	)
+)
+
+scaler = StandardScaler()
+previsores_treinamento = scaler.fit_transform(previsores_treinamento)
+previsores_teste = scaler.transform(previsores_teste)
+
+################## Regressao Polinomial ##################
+
+poly = PolynomialFeatures(degree=2)
+previsores_treinamento_poly = poly.fit_transform(previsores_treinamento)
+previsores_teste_poly = poly.transform(previsores_teste)
+
+regressor = LinearRegression()
+
+# Treinamento
+regressor.fit(previsores_treinamento_poly, objetivo_treinamento)
+
+score = regressor.score(previsores_treinamento_poly, objetivo_treinamento)
+
+# Teste
+previsoes = regressor.predict(previsores_teste_poly)
+
+################## Avaliacao dos resultados ##################
+
+score = regressor.score(previsores_teste_poly, objetivo_teste)
+mae = metrics.mean_absolute_error(objetivo_teste, previsoes)
+mse = metrics.mean_squared_error(objetivo_teste, previsoes)
+rmse = np.sqrt(metrics.mean_squared_error(objetivo_teste, previsoes))
+
+print("Score:", score)
+print("Mean Absolute Error:", mae)
+print("Mean Squared Error:", mse)
+print("Root Mean Squared Error:", rmse)
+
+# Parametros estimados para o modelo
+coef_0 = regressor.intercept_
+coeficientes = regressor.coef_
