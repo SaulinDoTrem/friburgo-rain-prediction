@@ -3,39 +3,28 @@
 Regressao linear (uma variavel) para estimar chuva.
 """
 
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from sklearn import metrics
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 
-
-def carregar_base():
-    data_path = (
-        Path(__file__).resolve().parents[1]
-        / "database"
-        / "data"
-        / "estacao-salinas-completo.csv"
-    )
-    base = pd.read_csv(data_path, decimal=",", na_values=["", " "])
-    base["data"] = pd.to_datetime(base["data"], format="%d/%m/%Y", errors="coerce")
-    base["hora"] = pd.to_numeric(base["hora"], errors="coerce")
-    return base
+from preprocessamento import (
+    SIMPLE_FEATURE_COLUMNS,
+    TARGET_COLUMN,
+    carregar_dataset_modelagem,
+)
 
 
 ################## Preprocessamento ##################
 
-base = carregar_base()
+base = carregar_dataset_modelagem()
 
-# Usando apenas temperatura como preditor (similar ao exemplo do plano de saude)
-cols_previsores = ["temperatura_inst"]
-col_objetivo = "chuva"
+cols_previsores = SIMPLE_FEATURE_COLUMNS
+col_objetivo = TARGET_COLUMN
 
-base = base[cols_previsores + [col_objetivo]].dropna()
+base = base[cols_previsores + [col_objetivo]].dropna(subset=[col_objetivo])
 
 previsores = base[cols_previsores]
 objetivo = base[[col_objetivo]]
@@ -49,19 +38,23 @@ previsores_treinamento, previsores_teste, objetivo_treinamento, objetivo_teste =
     )
 )
 
-# Visualizacao dos dados (treino)
+imputer = SimpleImputer(strategy="median")
+previsores_treinamento = imputer.fit_transform(previsores_treinamento)
+previsores_teste = imputer.transform(previsores_teste)
+
+################## Visualizacao dos dados ##################
+
 plt.figure(figsize=(12, 5))
 plt.subplot(1, 2, 1)
 plt.scatter(previsores_treinamento, objetivo_treinamento, alpha=0.5)
 plt.title("Regressao Linear - Dados de Treinamento")
-plt.xlabel("Temperatura (inst)")
+plt.xlabel("Chuva na hora anterior")
 plt.ylabel("Chuva")
 
-# Visualizacao dos dados (teste)
 plt.subplot(1, 2, 2)
 plt.scatter(previsores_teste, objetivo_teste, alpha=0.5)
 plt.title("Regressao Linear - Dados de Teste")
-plt.xlabel("Temperatura (inst)")
+plt.xlabel("Chuva na hora anterior")
 plt.ylabel("Chuva")
 plt.tight_layout()
 plt.savefig("linear_regression_data.png", dpi=100, bbox_inches="tight")
@@ -98,17 +91,21 @@ print(f"Coeficiente: {coeficientes[0]}")
 
 # Visualizacao da reta de regressao
 try:
+    previsores_imputados = imputer.transform(previsores)
+    x_plot = np.linspace(previsores_imputados.min(), previsores_imputados.max(), 200)
+    x_plot = x_plot.reshape(-1, 1)
+
     plt.figure(figsize=(10, 6))
-    plt.scatter(previsores, objetivo, alpha=0.5, label="Dados observados")
+    plt.scatter(previsores_imputados, objetivo, alpha=0.5, label="Dados observados")
     plt.plot(
-        previsores,
-        regressor.predict(previsores),
+        x_plot,
+        regressor.predict(x_plot),
         color="red",
         linewidth=2,
         label="Reta de regressao",
     )
     plt.title("Regressao Linear Simples")
-    plt.xlabel("Temperatura (inst)")
+    plt.xlabel("Chuva na hora anterior")
     plt.ylabel("Chuva")
     plt.legend()
     plt.tight_layout()

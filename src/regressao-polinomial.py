@@ -1,50 +1,46 @@
+# -*- coding: utf-8 -*-
 """
 Regressao polinomial (uma variavel) para estimar chuva.
 """
 
-from pathlib import Path
-
 import numpy as np
-import pandas as pd
 from sklearn import metrics
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
-
-def carregar_base():
-	data_path = (
-		Path(__file__).resolve().parents[1]
-		/ "database"
-		/ "data"
-		/ "estacao-salinas-completo.csv"
-	)
-	base = pd.read_csv(data_path, decimal=",", na_values=["", " "])
-	base["data"] = pd.to_datetime(base["data"], format="%d/%m/%Y", errors="coerce")
-	base["hora"] = pd.to_numeric(base["hora"], errors="coerce")
-	return base
+from preprocessamento import (
+    SIMPLE_FEATURE_COLUMNS,
+    TARGET_COLUMN,
+    carregar_dataset_modelagem,
+)
 
 
 ################## Preprocessamento ##################
 
-base = carregar_base()
+base = carregar_dataset_modelagem()
 
-cols_previsores = ["temperatura_inst"]
-col_objetivo = "chuva"
+cols_previsores = SIMPLE_FEATURE_COLUMNS
+col_objetivo = TARGET_COLUMN
 
-base = base[cols_previsores + [col_objetivo]].dropna()
+base = base[cols_previsores + [col_objetivo]].dropna(subset=[col_objetivo])
 
 previsores = base[cols_previsores]
 objetivo = base[[col_objetivo]]
 
 previsores_treinamento, previsores_teste, objetivo_treinamento, objetivo_teste = (
-	train_test_split(
-		previsores,
-		objetivo,
-		test_size=0.25,
-		random_state=0,
-	)
+    train_test_split(
+        previsores,
+        objetivo,
+        test_size=0.25,
+        random_state=0,
+    )
 )
+
+imputer = SimpleImputer(strategy="median")
+previsores_treinamento = imputer.fit_transform(previsores_treinamento)
+previsores_teste = imputer.transform(previsores_teste)
 
 scaler = StandardScaler()
 previsores_treinamento = scaler.fit_transform(previsores_treinamento)
@@ -52,7 +48,7 @@ previsores_teste = scaler.transform(previsores_teste)
 
 ################## Regressao Polinomial ##################
 
-poly = PolynomialFeatures(degree=2)
+poly = PolynomialFeatures(degree=2, include_bias=False)
 previsores_treinamento_poly = poly.fit_transform(previsores_treinamento)
 previsores_teste_poly = poly.transform(previsores_teste)
 
@@ -60,8 +56,6 @@ regressor = LinearRegression()
 
 # Treinamento
 regressor.fit(previsores_treinamento_poly, objetivo_treinamento)
-
-score = regressor.score(previsores_treinamento_poly, objetivo_treinamento)
 
 # Teste
 previsoes = regressor.predict(previsores_teste_poly)
@@ -71,7 +65,7 @@ previsoes = regressor.predict(previsores_teste_poly)
 score = regressor.score(previsores_teste_poly, objetivo_teste)
 mae = metrics.mean_absolute_error(objetivo_teste, previsoes)
 mse = metrics.mean_squared_error(objetivo_teste, previsoes)
-rmse = np.sqrt(metrics.mean_squared_error(objetivo_teste, previsoes))
+rmse = np.sqrt(mse)
 
 print("Score:", score)
 print("Mean Absolute Error:", mae)
