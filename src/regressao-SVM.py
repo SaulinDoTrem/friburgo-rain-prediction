@@ -43,12 +43,12 @@ pipeline = make_pipeline(
     SimpleImputer(strategy="median"),
     StandardScaler(),
     SGDRegressor(
-        loss="epsilon_insensitive",
-        epsilon=0.1,
-        alpha=0.0001,
-        max_iter=3000,
-        tol=1e-4,
-        random_state=0,
+    loss="squared_error",
+    penalty="elasticnet",
+    alpha=1e-5,
+    l1_ratio=0.15,
+    max_iter=10000,
+    random_state=0,
     ),
 )
 
