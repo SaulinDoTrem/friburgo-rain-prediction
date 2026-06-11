@@ -18,7 +18,11 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 
 from experimentos_regressao import criar_pipeline_base
-from preprocessamento import FEATURE_COLUMNS, TARGET_COLUMN, carregar_dataset_modelagem
+from scripts.preprocessamento import (
+    FEATURE_COLUMNS,
+    TARGET_COLUMN,
+    carregar_dataset_modelagem,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]

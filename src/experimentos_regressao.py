@@ -27,7 +27,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.tree import DecisionTreeRegressor
 
-from preprocessamento import (
+from scripts.preprocessamento import (
     FEATURE_COLUMNS,
     POLYNOMIAL_FEATURE_COLUMNS,
     TARGET_COLUMN,
