@@ -1,3 +1,5 @@
+# %%
+
 # -*- coding: utf-8 -*-
 """
 Regressao polinomial (uma variavel) para estimar chuva.
@@ -75,3 +77,6 @@ print("Root Mean Squared Error:", rmse)
 # Parametros estimados para o modelo
 coef_0 = regressor.intercept_
 coeficientes = regressor.coef_
+
+# %%
+ 
