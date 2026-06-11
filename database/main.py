@@ -9,7 +9,7 @@ import pandas as pd
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT_DIR / "src"))
 
-from preprocessamento import BASE_COLUMNS, preparar_dataset_modelagem
+from scripts.preprocessamento import BASE_COLUMNS, preparar_dataset_modelagem
 
 
 csv_dir = os.path.join(os.path.dirname(__file__), "data", "mes-a-mes")

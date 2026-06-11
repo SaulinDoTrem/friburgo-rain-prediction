@@ -10,7 +10,7 @@ import pandas as pd
 
 
 DATA_PATH = (
-    Path(__file__).resolve().parents[1]
+    Path(__file__).resolve().parents[2]
     / "database"
     / "data"
     / "estacao-salinas-completo.csv"
